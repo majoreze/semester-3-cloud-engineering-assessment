@@ -1,0 +1,133 @@
+name: backend-deployment-assessment
+services:
+  mongodb:
+    image: mongo:8.0
+    container_name: muchtodo-mongodb
+    command:
+      - mongod
+      - --replSet
+      - rs0
+      - --bind_ip_all
+      - --keyFile
+      - /data/keyfile/mongodb.key
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in your .env file}
+    volumes:
+      - mongodb_data:/data/db
+      - ./local-secrets/mongodb.key.linux:/data/keyfile/mongodb.key:ro
+    networks:
+      - muchtodo-network
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - >-
+          mongosh --quiet
+          --username "$$MONGO_INITDB_ROOT_USERNAME"
+          --password "$$MONGO_INITDB_ROOT_PASSWORD"
+          --authenticationDatabase admin
+          --eval 'try { rs.status().ok === 1 ? quit(0) : quit(1) } catch (e) { quit(1) }'
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+    restart: unless-stopped
+
+  mongodb-init:
+    image: mongo:8.0
+    container_name: muchtodo-mongodb-init
+    depends_on:
+      mongodb:
+        condition: service_started
+    networks:
+      - muchtodo-network
+    environment:
+      MONGO_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-admin}
+      MONGO_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in your .env file}
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        until mongosh --host mongodb:27017 \
+          --username "$$MONGO_ROOT_USERNAME" \
+          --password "$$MONGO_ROOT_PASSWORD" \
+          --authenticationDatabase admin \
+          --eval 'db.runCommand({ping:1})' >/dev/null 2>&1; do
+          echo "Waiting for MongoDB authentication to become available..."
+          sleep 3
+        done
+
+        mongosh --host mongodb:27017 \
+          --username "$$MONGO_ROOT_USERNAME" \
+          --password "$$MONGO_ROOT_PASSWORD" \
+          --authenticationDatabase admin \
+          --eval '
+            try {
+              if (rs.status().ok === 1) {
+                print("Replica set already initialised.");
+                quit(0);
+              }
+            } catch (e) {}
+
+            rs.initiate({
+              _id: "rs0",
+              members: [{ _id: 0, host: "mongodb:27017" }]
+            });
+          '
+
+        until mongosh --host mongodb:27017 \
+          --username "$$MONGO_ROOT_USERNAME" \
+          --password "$$MONGO_ROOT_PASSWORD" \
+          --authenticationDatabase admin \
+          --eval 'db.hello().isWritablePrimary' | grep -q true; do
+          echo "Waiting for MongoDB replica-set primary..."
+          sleep 3
+        done
+    restart: "no"
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: muchtodo-api:1.0
+    container_name: muchtodo-api
+    depends_on:
+      mongodb:
+        condition: service_started
+      mongodb-init:
+        condition: service_completed_successfully
+    environment:
+      PORT: "8080"
+      MONGO_URI: "mongodb://${MONGO_ROOT_USERNAME:-admin}:${MONGO_ROOT_PASSWORD_URI_ENCODED}@mongodb:27017/much_todo_db?authSource=admin&replicaSet=rs0"
+      DB_NAME: much_todo_db
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:?Set JWT_SECRET_KEY in your .env file}
+      JWT_EXPIRATION_HOURS: "72"
+      ENABLE_CACHE: "false"
+      LOG_LEVEL: INFO
+      LOG_FORMAT: json
+    ports:
+      - "${BACKEND_BIND_IP:-127.0.0.1}:8080:8080"
+    networks:
+      - muchtodo-network
+    healthcheck:
+      test:
+        - CMD
+        - wget
+        - -q
+        - -O
+        - /dev/null
+        - http://127.0.0.1:8080/health
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    restart: unless-stopped
+
+networks:
+  muchtodo-network:
+    driver: bridge
+
+
+volumes:
+  mongodb_data:
+    external: true
+    name: muchtodo-mongodb-recovery

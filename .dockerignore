@@ -1,0 +1,40 @@
+# Git history and metadata
+.git
+**/.git
+
+# Environment files and secrets
+.env
+.env.*
+mongodb.key
+mongodb.key.*
+mongo-keyfile
+local-secrets/
+
+# Terraform files, state and plans
+terraform/
+*.tfstate
+*.tfstate.*
+*.tfplan
+*.tfplan.*
+
+# Local recovery and backup files
+recovery-backups/
+evidence/backups/
+*.backup
+*.bak
+*.before-sensitive
+
+# Evidence and documentation
+evidence/
+
+# Python virtual environments and caches
+**/.venv/
+**/__pycache__/
+*.py[cod]
+
+# macOS files
+.DS_Store
+**/.DS_Store
+
+# Unnecessary dependencies
+**/node_modules

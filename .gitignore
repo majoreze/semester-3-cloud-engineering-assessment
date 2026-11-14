@@ -1,38 +1,72 @@
-# If you prefer the allow list template instead of the deny list, see community template:
-# https://github.com/github/gitignore/blob/main/community/Golang/Go.AllowList.gitignore
-#
-# Binaries for programs and plugins
+
+# Go binaries and build artifacts
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
-# Test binary, built with `go test -c`
 *.test
-
-# Code coverage profiles and other test artifacts
 *.out
 coverage.*
 *.coverprofile
 profile.cov
 
-# Dependency directories (remove the comment below to include it)
-# vendor/
-
-# Go workspace file
+# Go workspace
 go.work
 go.work.sum
 
-# env file
+# Environment files and secrets
 .env
+.env.*
+!.env.example
 
-# Editor/IDE
-# .idea/
-# .vscode/
-
-# extra files
-docker-compose.test.yaml
+# MongoDB authentication keyfiles
 mongodb.key
+mongodb.key.*
 mongo-keyfile
 
+# Local secrets and recovery data
+/local-secrets/
+/recovery-backups/
+/evidence/backups/
+
+# Terraform working directory and state
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+
+# Terraform variable files (keep examples only)
+*.tfvars
+*.tfvars.json
+!terraform.tfvars.example
+
+# Terraform saved plans
+*.tfplan
+*.tfplan.*
+
+# AWS credentials and configuration
+.aws/
+
+# Private keys and certificates
+*.pem
+*.key
+
+# Local backup files
+*.backup
+*.bak
+*.before-sensitive
+
+# Test Compose configuration
+docker-compose.test.yaml
+
+# Python virtual environments
+**/.venv/
+
+# macOS files
+.DS_Store
+
+# Editor/IDE files
+.idea/
+.vscode/
