@@ -564,18 +564,19 @@ resource "aws_eip" "bastion" {
 
 # Backend application server
 resource "aws_instance" "backend" {
-  ami                    = sensitive(local.al2023_ami_id)
-  instance_type          = var.instance_type
-  key_name               = var.key_pair_name
-  subnet_id              = aws_subnet.private[0].id
-  vpc_security_group_ids = [aws_security_group.backend.id]
-  iam_instance_profile   = aws_iam_instance_profile.backend.name
-  depends_on             = [aws_route_table_association.private]
+  ami                         = sensitive(local.al2023_ami_id)
+  instance_type               = var.instance_type
+  key_name                    = var.key_pair_name
+  subnet_id                   = aws_subnet.private[0].id
+  vpc_security_group_ids      = [aws_security_group.backend.id]
+  iam_instance_profile        = aws_iam_instance_profile.backend.name
+  user_data_replace_on_change = false
+  depends_on                  = [aws_route_table_association.private]
   user_data = templatefile("${path.module}/user_data/backend_setup.sh", {
     aws_region     = var.aws_region
     aws_account_id = data.aws_caller_identity.current.account_id
     ecr_repository = aws_ecr_repository.backend.name
-    image_tag      = "1.0"
+    image_tag      = "1.1"
     project_name   = var.project_name
   })
 
@@ -587,13 +588,14 @@ resource "aws_instance" "backend" {
 
 # MongoDB database server
 resource "aws_instance" "mongodb" {
-  ami                    = sensitive(local.al2023_ami_id)
-  instance_type          = var.instance_type
-  key_name               = var.key_pair_name
-  subnet_id              = aws_subnet.private[1].id
-  vpc_security_group_ids = [aws_security_group.mongodb.id]
-  iam_instance_profile   = aws_iam_instance_profile.mongodb.name
-  depends_on             = [aws_route_table_association.private]
+  ami                         = sensitive(local.al2023_ami_id)
+  instance_type               = var.instance_type
+  key_name                    = var.key_pair_name
+  subnet_id                   = aws_subnet.private[1].id
+  vpc_security_group_ids      = [aws_security_group.mongodb.id]
+  iam_instance_profile        = aws_iam_instance_profile.mongodb.name
+  user_data_replace_on_change = false
+  depends_on                  = [aws_route_table_association.private]
 
   user_data = templatefile("${path.module}/user_data/mongodb_setup.sh", {
     aws_region            = var.aws_region
