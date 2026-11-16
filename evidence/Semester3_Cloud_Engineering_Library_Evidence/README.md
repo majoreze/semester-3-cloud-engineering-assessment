@@ -32,7 +32,8 @@ AWS IAM Identity Center authentication and EC2 key-pair description.
 ### 06 — AWS ALB CRUD
 `06-aws-alb-crud/`
 
-Seven screenshots demonstrating Todo creation, retrieval, listing, updating, and deletion through the AWS Application Load Balancer.
+Eight screenshots demonstrating Todo creation, retrieval, listing, updating, deletion, and public ALB endpoint verification through the AWS Application Load Balancer.
+- alb-endpoint-verification.png — Public ALB /health and root endpoint verification, both returning HTTP 200.
 
 ### 07 — ECR and Parameter Store
 `07-ecr-and-parameter-store/`
@@ -62,7 +63,7 @@ Seven screenshots demonstrating Todo creation, retrieval, listing, updating, and
 - Production health endpoint: HTTP 200 OK
 - Public root endpoint: HTTP 200 OK
 - ALB target health: healthy
-- Database connectivity: OK
+- Database connectivity: Backend health endpoint reports database: ok; MongoDB replica set rs0 verified with one PRIMARY member.
 
 ## Curation Notes
 

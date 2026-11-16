@@ -70,3 +70,6 @@ docker-compose.test.yaml
 # Editor/IDE files
 .idea/
 .vscode/
+
+# Locally downloaded installers
+/terraform/session-manager-plugin.pkg
